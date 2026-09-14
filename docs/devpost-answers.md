@@ -38,7 +38,7 @@ Ring Partner API: webhooks, `POST /v1/devices/{id}/media/image/download`, `POST 
 New.
 
 ## Testing instructions
-No login. Open the live demo. On "Walter · night exits", click the bottom buttons in order: 1:47 AM (expected arrival, stays quiet), 2:14 AM (night exit: watch the webhook verify, rule chips, each Strands tool call pass its hook, the Chime message and Maya's phone alert), 2:17 AM (driveway escalation: last-seen card, call chain and scripts; scroll the phone). Then tap "Found him. He's safe" on the phone. Switch to "Ruth · quiet morning" and run both steps. "Reset" starts over. Runs take about 3–8 s. Slides: /slides.html. Ring events are simulated (see README); live mode instructions are in docs/ring-live-checklist.md.
+No login. Open https://night-door.vercel.app. On "Walter · night exits", click the bottom buttons in order: 1:47 AM (expected arrival, stays quiet), 2:14 AM (night exit: watch the webhook verify, rule chips, each Strands tool call pass its hook, the Chime message and Maya's phone alert), 2:17 AM (driveway escalation: last-seen card, call chain and scripts; scroll the phone). Then tap "Found him. He's safe" on the phone. Switch to "Ruth · quiet morning" and run both steps. "Reset" starts over. Runs take about 3–8 s. Slides: /slides.html. Ring events are simulated (see README); live mode instructions are in docs/ring-live-checklist.md.
 
 ## AWS Builder: which AWS services did you incorporate and how?
 **Strands Agents SDK (TypeScript, `@strands-agents/sdk` 1.17).** It powers the whole agent in `lib/agent.ts`, running inside a Next.js route handler on Vercel:
