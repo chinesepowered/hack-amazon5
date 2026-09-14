@@ -2,9 +2,9 @@
 
 **Night Door is a Ring app for families caring for someone with dementia.** When a Ring camera sees a person leave the house in the middle of the night, a Strands agent plays a family member's calm, familiar voice on the Ring Chime, sends the on-duty caregiver the snapshot and exactly what the person is wearing, and, if a second camera sees them moving away, prepares a last-seen card, the call chain and a script for the phone. The family decides what happens next. For parents who live alone, the same care plan runs a gentle **Quiet Morning** check-in.
 
-- **Live demo:** __LIVE_URL__ (no login; uses clearly labeled simulated Ring events)
-- **Pitch deck:** __LIVE_URL__/slides.html
-- **Video:** __VIDEO_URL__
+- **Live demo:** https://night-door.vercel.app (no login; uses clearly labeled simulated Ring events)
+- **Pitch deck:** https://night-door.vercel.app/slides.html
+- **Video:** coming with the Devpost submission
 
 ![Night Door dashboard](docs/screenshot.png)
 
