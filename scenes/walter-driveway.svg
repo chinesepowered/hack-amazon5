@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <!-- Illustrated floodlight-camera frame for the Night Door simulator (original artwork, no real people). -->
+  <defs>
+    <radialGradient id="flood" cx="0.62" cy="1.05" r="1.05">
+      <stop offset="0" stop-color="#fff1cf" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#e8c98e" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="drive" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#8b8a86"/>
+      <stop offset="1" stop-color="#3b3c40"/>
+    </linearGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.78">
+      <stop offset="0.55" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.9"/>
+    </radialGradient>
+    <pattern id="plaid" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="16" fill="#2c4d8e"/>
+      <rect y="6" width="16" height="4" fill="#5a7dc6" opacity="0.75"/>
+      <rect x="6" width="4" height="16" fill="#5a7dc6" opacity="0.6"/>
+      <rect y="7.5" width="16" height="1" fill="#e4ebf8" opacity="0.55"/>
+      <rect x="7.5" width="1" height="16" fill="#e4ebf8" opacity="0.5"/>
+    </pattern>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix values="0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0.10 0"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="720" fill="#0a120d"/>
+  <!-- street, far curb and hedge -->
+  <rect x="0" y="0" width="1280" height="70" fill="#07100b"/>
+  <rect x="0" y="70" width="1280" height="96" fill="#1a1d24"/>
+  <g fill="#c9b35c" opacity="0.5"><rect x="80" y="116" width="70" height="5"/><rect x="260" y="116" width="70" height="5"/><rect x="440" y="116" width="70" height="5"/><rect x="620" y="116" width="70" height="5"/><rect x="800" y="116" width="70" height="5"/><rect x="980" y="116" width="70" height="5"/><rect x="1160" y="116" width="70" height="5"/></g>
+  <rect x="0" y="166" width="1280" height="34" fill="#55575a"/>
+  <!-- lawns -->
+  <rect x="0" y="200" width="1280" height="520" fill="#12241a"/>
+  <!-- driveway -->
+  <path d="M540 200 L880 200 L1150 720 L310 720 Z" fill="url(#drive)"/>
+  <path d="M705 200 L715 200 L740 720 L718 720 Z" fill="#6f6e6a" opacity="0.5"/>
+  <!-- parked car -->
+  <g transform="translate(250 360) rotate(-8)">
+    <rect x="0" y="0" width="230" height="330" rx="46" fill="#26344c"/>
+    <rect x="26" y="52" width="178" height="80" rx="18" fill="#6f86a8" opacity="0.55"/>
+    <rect x="26" y="200" width="178" height="70" rx="16" fill="#6f86a8" opacity="0.45"/>
+    <rect x="18" y="140" width="194" height="52" rx="8" fill="#1d283a"/>
+  </g>
+  <!-- bushes -->
+  <ellipse cx="1180" cy="430" rx="160" ry="120" fill="#0b1a11"/>
+  <ellipse cx="90" cy="300" rx="130" ry="70" fill="#0b1a11"/>
+
+  <!-- person near the sidewalk, walking away toward the street -->
+  <ellipse cx="748" cy="258" rx="38" ry="7" fill="#000" opacity="0.45"/>
+  <g>
+    <rect x="734" y="210" width="12" height="44" rx="6" fill="#b8bcc6"/>
+    <rect x="750" y="208" width="12" height="44" rx="6" fill="#aeb2bd"/>
+    <ellipse cx="740" cy="255" rx="10" ry="5" fill="#7b5533"/>
+    <ellipse cx="757" cy="252" rx="10" ry="5" fill="#7b5533"/>
+    <path d="M727 150 Q748 142 769 150 L779 226 Q748 232 717 226 Z" fill="url(#plaid)"/>
+    <path d="M719 156 Q712 180 715 214 L725 214 Q724 184 730 158 Z" fill="url(#plaid)"/>
+    <path d="M777 156 Q784 180 781 214 L771 214 Q772 184 766 158 Z" fill="url(#plaid)"/>
+    <ellipse cx="748" cy="134" rx="14" ry="16" fill="#23252d"/>
+  </g>
+
+  <rect width="1280" height="720" fill="url(#flood)"/>
+  <rect width="1280" height="720" fill="url(#vignette)"/>
+  <rect width="1280" height="720" filter="url(#grain)" opacity="0.6"/>
+
+  <!-- generic camera overlay (not Ring branding) -->
+  <rect x="696" y="110" width="104" height="160" rx="4" fill="none" stroke="#7ee0b5" stroke-width="3" stroke-dasharray="10 6" opacity="0.85"/>
+  <rect x="696" y="86" width="80" height="24" rx="4" fill="#7ee0b5" opacity="0.9"/>
+  <text x="736" y="104" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#08130e" text-anchor="middle">person</text>
+  <rect x="28" y="26" width="170" height="40" rx="20" fill="#000" opacity="0.55"/>
+  <circle cx="54" cy="46" r="7" fill="#ff5a4e"/>
+  <text x="72" y="53" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#fff">Driveway</text>
+  <rect x="1046" y="26" width="206" height="40" rx="20" fill="#000" opacity="0.55"/>
+  <text x="1149" y="53" font-family="Menlo, Consolas, monospace" font-size="20" fill="#fff" text-anchor="middle">02:17:32 AM</text>
+  <text x="32" y="700" font-family="Arial, sans-serif" font-size="15" fill="#fff" opacity="0.7">Night Door simulator · illustrated camera image</text>
+</svg>

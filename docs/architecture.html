@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Night Door architecture</title>
+<style>
+  :root { --bg:#070b16; --panel:#10172a; --line:#2a3553; --text:#eef1f8; --muted:#9aa5c0; --amber:#f5b971; --mint:#6fdcaa; --sky:#8fb4ff; --violet:#b59cff; --rose:#ff7a72; }
+  * { box-sizing: border-box; }
+  body { margin:0; width:1600px; height:1000px; background: radial-gradient(900px 600px at 70% 0%, #1a2445, transparent 60%), var(--bg); color:var(--text); font-family: "Segoe UI", Inter, Arial, sans-serif; position:relative; overflow:hidden; }
+  h1 { position:absolute; left:60px; top:36px; margin:0; font-family: Georgia, "Times New Roman", serif; font-size:44px; font-weight:600; }
+  .sub { position:absolute; left:62px; top:96px; color:var(--muted); font-size:19px; }
+  .box { position:absolute; background:var(--panel); border:1.5px solid var(--line); border-radius:18px; padding:16px 18px; }
+  .box h2 { margin:0 0 8px; font-size:20px; }
+  .box p, .box li { margin:0; color:var(--muted); font-size:15px; line-height:1.45; }
+  .box ul { margin:6px 0 0; padding-left:18px; }
+  .tag { display:inline-block; font-size:12px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; padding:3px 9px; border-radius:999px; margin-bottom:8px; }
+  .ring { border-color: rgba(143,180,255,.6); } .ring .tag { background: rgba(143,180,255,.15); color: var(--sky); }
+  .app { border-color: rgba(245,185,113,.55); } .app .tag { background: rgba(245,185,113,.15); color: var(--amber); }
+  .strands { border-color: rgba(181,156,255,.65); background: linear-gradient(180deg, #171a36, #10172a); } .strands .tag { background: rgba(181,156,255,.16); color: var(--violet); }
+  .model { border-color: rgba(154,165,192,.5); } .model .tag { background: rgba(154,165,192,.14); color: var(--muted); }
+  .family { border-color: rgba(111,220,170,.55); } .family .tag { background: rgba(111,220,170,.14); color: var(--mint); }
+  code { font-family: Consolas, "JetBrains Mono", monospace; font-size:13.5px; color:#dfe4f2; }
+  svg { position:absolute; left:0; top:0; }
+  .lbl { font-family: Consolas, monospace; font-size:13px; fill:#c9d2ea; }
+  .group { position:absolute; border:1.5px dashed #33405f; border-radius:26px; }
+  .group span { position:absolute; top:-13px; left:24px; background:var(--bg); padding:0 10px; color:var(--amber); font-size:14px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+  .foot { position:absolute; left:62px; bottom:28px; color:#6c7896; font-size:14px; }
+</style>
+</head>
+<body>
+  <h1>Night Door · architecture</h1>
+  <div class="sub">Ring events in, a deterministic rules engine decides, a Strands agent acts through guarded tools, the family decides.</div>
+
+  <svg width="1600" height="1000">
+    <defs>
+      <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8a96b4"/></marker>
+    </defs>
+    <g stroke="#8a96b4" stroke-width="2" fill="none" marker-end="url(#a)">
+      <path d="M330 300 L330 356"/>
+      <path d="M432 470 L566 470"/>
+      <path d="M882 350 L956 350"/>
+      <path d="M1125 472 L1125 556"/>
+      <path d="M1100 782 C 900 930, 360 930, 250 564"/>
+      <path d="M958 700 L884 700"/>
+      <path d="M1435 472 L1435 556"/>
+    </g>
+    <text class="lbl" x="342" y="336">signed webhooks</text>
+    <text class="lbl" x="448" y="455">X-Signature</text>
+    <text class="lbl" x="898" y="338">RUN</text>
+    <text class="lbl" x="1135" y="520">tool calls</text>
+    <text class="lbl" x="560" y="930">POST /media/image/download · /media/audio/playback</text>
+    <text class="lbl" x="888" y="688">alerts</text>
+    <text class="lbl" x="1445" y="520">chat + vision</text>
+  </svg>
+
+  <div class="box ring" style="left:60px; top:150px; width:370px; height:150px;">
+    <div class="tag">Ring</div>
+    <h2>Ring devices</h2>
+    <p>Video Doorbell (front door), Floodlight Cam (driveway), Ring Chime. Motion with <code>sub_type: human</code>, doorbell presses.</p>
+  </div>
+
+  <div class="box ring" style="left:60px; top:360px; width:370px; height:200px;">
+    <div class="tag">Ring Partner API</div>
+    <h2>api.amazonvision.com</h2>
+    <ul>
+      <li>Webhooks <code>motion_detected</code>, <code>button_press</code>, HMAC-SHA256 <code>X-Signature</code></li>
+      <li><code>POST /v1/devices/{id}/media/image/download</code></li>
+      <li><code>POST /v1/devices/{id}/media/audio/playback</code></li>
+    </ul>
+  </div>
+
+  <div class="group" style="left:540px; top:180px; width:1000px; height:620px;"><span>Night Door · Next.js on Vercel</span></div>
+
+  <div class="box app" style="left:570px; top:230px; width:310px; height:330px;">
+    <div class="tag">Intake</div>
+    <h2>Webhook + simulator</h2>
+    <ul>
+      <li><code>/api/ring/webhook</code>: verify signature, 200 in &lt;5 s, queue</li>
+      <li><code>/api/sim/emit</code>: simulated Ring events with the documented JSON:API fields, signed the same way</li>
+      <li><code>lib/ring/webhook.ts</code> one parser for both</li>
+    </ul>
+  </div>
+
+  <div class="box app" style="left:960px; top:230px; width:330px; height:240px;">
+    <div class="tag">Deterministic</div>
+    <h2>Rules engine</h2>
+    <p><code>lib/rules.ts</code>: night hours, expected arrivals, chime cooldown, second camera within 10 min, quiet-morning check. Decides <b>run</b>, <b>quiet</b> (no model call) or <b>no action</b>, and the tool protocol.</p>
+  </div>
+
+  <div class="box strands" style="left:960px; top:560px; width:560px; height:220px;">
+    <div class="tag">AWS · Strands Agents SDK (TypeScript)</div>
+    <h2>Night Door agent · <code>lib/agent.ts</code></h2>
+    <ul>
+      <li>Tools: <code>get_snapshot</code> · <code>describe_clothing</code> · <code>play_chime_message</code> · <code>alert_family</code> · <code>escalate_incident</code> · <code>close_incident</code> · <code>confirm_check_in</code></li>
+      <li><code>BeforeToolCallEvent</code> hook: protocol order, privacy (clothing only), cooldown, second signal, family-only close, step cap</li>
+      <li><code>ModelMessageEvent</code> hook streams narration; <code>OpenAIModel</code> provider</li>
+    </ul>
+  </div>
+
+  <div class="box model" style="left:1330px; top:230px; width:210px; height:240px;">
+    <div class="tag">Model</div>
+    <h2>Qwen3.8-27B</h2>
+    <p>OpenAI-compatible endpoint (W&amp;B Inference), temperature 0. Tool calling + image input for clothing descriptions. Swappable for Amazon Bedrock.</p>
+  </div>
+
+  <div class="box family" style="left:570px; top:620px; width:310px; height:160px;">
+    <div class="tag">Family</div>
+    <h2>On-duty caregiver's phone</h2>
+    <p>Snapshot, what they're wearing, last-seen card, call chain, phone scripts. Only a family member marks "safe".</p>
+  </div>
+
+  <div class="foot">Streams NDJSON to the dashboard: webhook → rule checks → every tool call with its hook verdict → results. Demo households and camera images are fictional.</div>
+</body>
+</html>

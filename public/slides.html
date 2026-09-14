@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Night Door · pitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#070b16; --panel:#10172a; --line:#26314d; --text:#eef1f8; --muted:#9aa5c0; --faint:#6c7896; --amber:#f5b971; --rose:#ff7a72; --mint:#6fdcaa; --sky:#8fb4ff; --violet:#b59cff; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background: radial-gradient(1200px 800px at 75% -10%, #1a2445 0%, transparent 60%), var(--bg); color:var(--text); font-family: Inter, system-ui, sans-serif; overflow:hidden; }
+  .deck { position:absolute; left:50%; top:50%; width:1600px; height:900px; transform-origin:center; }
+  .slide { position:absolute; inset:0; padding:90px 110px; display:none; }
+  .slide.on { display:block; }
+  .serif { font-family: Fraunces, Georgia, serif; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+  .kicker { color:var(--amber); font-weight:700; letter-spacing:.14em; text-transform:uppercase; font-size:20px; }
+  h1 { font-family: Fraunces, Georgia, serif; font-weight:600; font-size:128px; line-height:1; margin:26px 0 0; letter-spacing:-.02em; }
+  h2 { font-family: Fraunces, Georgia, serif; font-weight:600; font-size:64px; line-height:1.08; margin:18px 0 0; letter-spacing:-.01em; }
+  .lede { font-size:34px; line-height:1.35; color:#dbe1f0; max-width:980px; margin-top:34px; }
+  .lede em { font-family: Fraunces, Georgia, serif; color:var(--amber); }
+  .chips { display:flex; gap:12px; margin-top:44px; flex-wrap:wrap; }
+  .chip { border:1px solid var(--line); background:rgba(16,23,42,.8); color:var(--muted); border-radius:999px; padding:10px 18px; font-size:20px; }
+  .chip b { color:var(--text); }
+  .foot { position:absolute; left:110px; right:110px; bottom:44px; display:flex; justify-content:space-between; color:var(--faint); font-size:17px; }
+  .moon { position:absolute; right:150px; top:120px; width:300px; height:420px; }
+  .stats { display:grid; grid-template-columns: repeat(3, 1fr); gap:26px; margin-top:54px; }
+  .stat { background:linear-gradient(180deg, var(--panel), rgba(16,23,42,.6)); border:1px solid var(--line); border-radius:24px; padding:30px 30px 26px; }
+  .stat .n { font-family: Fraunces, Georgia, serif; font-size:84px; font-weight:600; line-height:1; color:var(--amber); }
+  .stat .t { font-size:23px; color:#dbe1f0; margin-top:14px; line-height:1.35; }
+  .stat .s { font-size:15px; color:var(--faint); margin-top:14px; }
+  .who { margin-top:40px; font-size:27px; line-height:1.45; color:#dbe1f0; max-width:1300px; }
+  .who b { color:var(--text); }
+  .flow { display:grid; grid-template-columns: 1fr 44px 1fr 44px 1.35fr 44px 1fr; align-items:stretch; margin-top:54px; }
+  .node { border:1px solid var(--line); border-radius:22px; padding:22px 22px; background:var(--panel); }
+  .node h3 { margin:10px 0 8px; font-size:26px; }
+  .node p { margin:0; color:var(--muted); font-size:18px; line-height:1.45; }
+  .node .tag { display:inline-block; font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:4px 10px; border-radius:999px; }
+  .arrow { display:grid; place-items:center; color:#8a96b4; font-size:34px; }
+  .t-ring { background:rgba(143,180,255,.15); color:var(--sky); } .n-ring { border-color:rgba(143,180,255,.5); }
+  .t-rule { background:rgba(245,185,113,.15); color:var(--amber); } .n-rule { border-color:rgba(245,185,113,.5); }
+  .t-strands { background:rgba(181,156,255,.16); color:var(--violet); } .n-strands { border-color:rgba(181,156,255,.6); background:linear-gradient(180deg,#171a36,#10172a); }
+  .t-fam { background:rgba(111,220,170,.14); color:var(--mint); } .n-fam { border-color:rgba(111,220,170,.5); }
+  .code { font-family:"JetBrains Mono", monospace; font-size:16px; color:#dfe4f2; }
+  .never { margin-top:36px; display:flex; gap:14px; flex-wrap:wrap; }
+  .never span { border:1px solid rgba(255,122,114,.4); color:#ffc2bd; border-radius:12px; padding:9px 14px; font-size:19px; }
+  .grid2 { display:grid; grid-template-columns: 1.1fr 1fr; gap:40px; margin-top:44px; }
+  .point { display:flex; gap:18px; margin-bottom:26px; }
+  .point .i { flex:none; width:46px; height:46px; border-radius:14px; display:grid; place-items:center; font-weight:700; font-size:22px; }
+  .point h4 { margin:0; font-size:27px; }
+  .point p { margin:6px 0 0; color:var(--muted); font-size:20px; line-height:1.45; }
+  .biz { border:1px solid var(--line); border-radius:24px; padding:30px; background:var(--panel); }
+  .biz h4 { margin:0 0 12px; font-size:22px; color:var(--amber); letter-spacing:.08em; text-transform:uppercase; }
+  .biz p, .biz li { color:#dbe1f0; font-size:21px; line-height:1.5; margin:0; }
+  .biz ul { padding-left:22px; margin:0; }
+  .nav { position:fixed; right:18px; bottom:14px; color:#4d5877; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <section class="slide">
+    <div class="kicker">Ring track · Build, Ship, Shape</div>
+    <h1>Night Door</h1>
+    <p class="lede">When Dad walks out the front door at 2 AM, the first voice he hears should be <em>family</em>, and the family should know exactly where to look.</p>
+    <div class="chips">
+      <span class="chip"><b>Ring</b> webhooks · snapshots · Chime audio</span>
+      <span class="chip"><b>Strands Agents SDK</b> tools + hooks</span>
+      <span class="chip">For dementia caregivers</span>
+    </div>
+    <svg class="moon" viewBox="0 0 300 420" aria-hidden="true">
+      <path d="M232 40 a46 46 0 1 0 38 70 a38 38 0 1 1 -38 -70 Z" fill="#dfe5ff" opacity=".9"/>
+      <rect x="40" y="120" width="170" height="290" rx="85" fill="#f5b971" opacity=".08"/>
+      <path d="M60 410 V200 a65 65 0 0 1 130 0 V410 Z" fill="#f5b971" opacity=".16" stroke="#f5b971" stroke-width="4"/>
+      <circle cx="160" cy="300" r="8" fill="#f5b971"/>
+    </svg>
+    <div class="foot"><span>Demo uses simulated Ring events · all people fictional</span><span>1 / 4</span></div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The problem</div>
+    <h2>Wandering is common, and night is when no one is watching.</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">6 in 10</div><div class="t">people living with dementia will wander at least once; many do so repeatedly</div><div class="s">Alzheimer's Association</div></div>
+      <div class="stat"><div class="n">7.4M</div><div class="t">Americans aged 65 and older are living with Alzheimer's dementia</div><div class="s">Alzheimer's Association, 2026 Facts and Figures</div></div>
+      <div class="stat"><div class="n">19B+</div><div class="t">hours of unpaid care given last year by nearly 13 million family members and friends</div><div class="s">Alzheimer's Association, 2026 Facts and Figures</div></div>
+    </div>
+    <p class="who"><b>Who it's for:</b> the daughter asleep across town, the son home from a night shift. A door alarm only says <i>something opened</i>. It can't tell Leo coming home from Dad leaving, and it gives the family nothing to act on.</p>
+    <div class="foot"><span>Sources: alz.org wandering guidance; alz.org 2026 Facts and Figures (Apr 21, 2026)</span><span>2 / 4</span></div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">How it works</div>
+    <h2>Deterministic where it matters. An agent where it helps.</h2>
+    <div class="flow">
+      <div class="node n-ring"><span class="tag t-ring">Ring</span><h3>Signed webhook</h3><p><span class="code">motion_detected</span> · <span class="code">sub_type: human</span><br/>HMAC-SHA256 <span class="code">X-Signature</span> verified</p></div>
+      <div class="arrow">→</div>
+      <div class="node n-rule"><span class="tag t-rule">Rules engine</span><h3>Should anything happen?</h3><p>Night hours · expected arrivals · chime cooldown · second camera within 10 min. Quiet events never call a model.</p></div>
+      <div class="arrow">→</div>
+      <div class="node n-strands"><span class="tag t-strands">Strands Agents SDK</span><h3>Agent with guarded tools</h3><p><span class="code">get_snapshot</span> · <span class="code">describe_clothing</span> · <span class="code">play_chime_message</span> · <span class="code">alert_family</span> · <span class="code">escalate_incident</span><br/>Every call passes a <span class="code">BeforeToolCallEvent</span> hook.</p></div>
+      <div class="arrow">→</div>
+      <div class="node n-fam"><span class="tag t-fam">Family</span><h3>One clear decision</h3><p>Familiar voice on the Ring Chime, snapshot, what he's wearing, last seen, call chain and scripts.</p></div>
+    </div>
+    <div class="never"><span>Never identifies faces</span><span>Never guesses age, gender or ethnicity</span><span>Never calls 911 for you</span><span>Only family marks "safe"</span></div>
+    <div class="foot"><span>Next.js on Vercel · Strands TypeScript SDK · OpenAI-compatible model (Qwen3.8-27B)</span><span>3 / 4</span></div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Why it matters</div>
+    <h2>The first minutes decide how the night ends.</h2>
+    <div class="grid2">
+      <div>
+        <div class="point"><div class="i" style="background:rgba(245,185,113,.15);color:#f5b971">1</div><div><h4>A calm redirect, instantly</h4><p>Maya's recorded voice plays on the hallway Chime the moment the door camera sees Dad leave.</p></div></div>
+        <div class="point"><div class="i" style="background:rgba(143,180,255,.15);color:#8fb4ff">2</div><div><h4>Everything needed to find him</h4><p>Time, door, direction and exactly what he's wearing, ready to read to a dispatcher.</p></div></div>
+        <div class="point"><div class="i" style="background:rgba(111,220,170,.14);color:#6fdcaa">3</div><div><h4>Silent the rest of the time</h4><p>Expected arrivals and daytime motion stay quiet, so families don't learn to ignore alerts.</p></div></div>
+      </div>
+      <div class="biz">
+        <h4>Beyond the hackathon</h4>
+        <ul>
+          <li>Ring Appstore web app with a monthly family plan</li>
+          <li>Home-care agency plan: many homes, one on-call view</li>
+          <li>Quiet Morning for parents who live alone</li>
+          <li>Next: custom Chime audio upload, Alexa+ check-ins</li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot"><span>Night Door · built during the hackathon window · demo data fictional</span><span>4 / 4</span></div>
+  </section>
+
+</div>
+<div class="nav">← → to navigate</div>
+<script>
+  const slides = [...document.querySelectorAll(".slide")];
+  const params = new URLSearchParams(location.search);
+  let i = Math.min(Math.max(parseInt(params.get("s") || "1", 10) - 1, 0), slides.length - 1);
+  const show = () => slides.forEach((s, k) => s.classList.toggle("on", k === i));
+  const fit = () => {
+    const s = Math.min(innerWidth / 1600, innerHeight / 900);
+    document.getElementById("deck").style.transform = `translate(-50%, -50%) scale(${s})`;
+  };
+  addEventListener("resize", fit);
+  addEventListener("keydown", (e) => {
+    if (["ArrowRight", "PageDown", " "].includes(e.key)) i = Math.min(i + 1, slides.length - 1);
+    if (["ArrowLeft", "PageUp"].includes(e.key)) i = Math.max(i - 1, 0);
+    show();
+  });
+  fit();
+  show();
+</script>
+</body>
+</html>
