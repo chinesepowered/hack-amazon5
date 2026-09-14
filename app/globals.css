@@ -897,3 +897,22 @@ details.script p {
     text-align: left;
   }
 }
+
+/* Keep the desktop dashboard to exactly one viewport: panels scroll, the page never does. */
+.phone {
+  max-height: none;
+}
+
+.sheet,
+.feed,
+.timeline,
+.notifs {
+  overscroll-behavior: contain;
+}
+
+@media (min-width: 1101px) {
+  html,
+  body {
+    overflow: hidden;
+  }
+}
