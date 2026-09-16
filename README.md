@@ -97,4 +97,4 @@ pnpm build && pnpm start     # http://localhost:3000
 
 ## License
 
-TBD before submission.
+[AGPL-3.0](LICENSE). Commercial licences are available from the author. The Night Door name and logo are not covered by the licence — see [TRADEMARKS.md](TRADEMARKS.md).
