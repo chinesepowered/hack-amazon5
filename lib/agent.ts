@@ -64,7 +64,14 @@ export async function runNightDoorAgent(opts: {
         ctx.snapshot = { id: `snap-${device_id}-${now}`, deviceId: device_id, deviceName: d.name, capturedAt: now, src: img.src };
         ctx.dataUri = img.dataUri;
         done.add("get_snapshot");
-        emit({ t: "tool_result", name: "get_snapshot", summary: `${d.name} snapshot · ${img.mime} · ${Math.round(img.bytes / 1024)} KB`, image: img.src });
+        emit({
+          t: "tool_result",
+          name: "get_snapshot",
+          summary: `${d.name} snapshot · ${img.mime} · ${Math.round(img.bytes / 1024)} KB${img.note ? ` · ${img.note}` : ""}`,
+          image: img.src,
+          source: img.source === "ring" ? "ring" : "simulator",
+          note: img.note,
+        });
         return { snapshot_id: ctx.snapshot.id, device_name: d.name, captured_at: at };
       },
     }),
@@ -101,7 +108,13 @@ export async function runNightDoorAgent(opts: {
         if (state.incident && state.incident.status !== "closed") state.incident.chimePlayedAt = now;
         if (msg.purpose === "morning_check_in") state.checkIn = { status: "sent", sentAt: now };
         done.add("play_chime_message");
-        emit({ t: "tool_result", name: "play_chime_message", summary: `${chimeDevice.name} (HTTP ${res.status}) · ${msg.voiceOf}'s voice: "${msg.text}"` });
+        emit({
+          t: "tool_result",
+          name: "play_chime_message",
+          summary: `${chimeDevice.name} (HTTP ${res.status}) · ${msg.voiceOf}'s voice: "${msg.text}"${res.note ? ` · ${res.note}` : ""}`,
+          source: res.source === "ring" ? "ring" : "simulator",
+          note: res.note,
+        });
         return { played: true, chime: chimeDevice.name, voice_of: msg.voiceOf, message: msg.text };
       },
     }),

@@ -8,6 +8,8 @@ import HomeMap from "./HomeMap";
 import AgentFeed, { type FeedRun } from "./AgentFeed";
 import Phone from "./Phone";
 
+type Mode = "simulator" | "hybrid" | "live";
+
 type Step = {
   id: string;
   time: string;
@@ -32,7 +34,7 @@ const STEPS: Record<HouseholdId, Step[]> = {
 const START_TIME: Record<HouseholdId, string> = { walter: "01:40", ruth: "09:52" };
 const SAFE_TIME: Record<HouseholdId, string> = { walter: "02:26", ruth: "10:06" };
 
-export default function NightDoorApp({ mode }: { mode: "simulator" | "live" }) {
+export default function NightDoorApp({ mode }: { mode: Mode }) {
   const [household, setHousehold] = useState<HouseholdId>("walter");
   const h = HOUSEHOLDS[household];
   const [state, setState] = useState<NightState>(() => initialState("walter"));
@@ -43,6 +45,7 @@ export default function NightDoorApp({ mode }: { mode: "simulator" | "live" }) {
   const [clock, setClock] = useState(() => tsAt(HOUSEHOLDS.walter, START_TIME.walter));
   const [pulse, setPulse] = useState<{ deviceId: string; n: number } | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<string | null>(null);
+  const [ringDevices, setRingDevices] = useState<string[] | null>(null);
   const lastAlertCount = useRef(0);
 
   const applyState = useCallback((s: NightState) => {
@@ -51,6 +54,18 @@ export default function NightDoorApp({ mode }: { mode: "simulator" | "live" }) {
     if (s.alerts.length > lastAlertCount.current) setSelectedAlert(s.alerts[s.alerts.length - 1].id);
     lastAlertCount.current = s.alerts.length;
   }, []);
+
+  // Hybrid mode: show the devices the Ring API really returns, next to the simulated events.
+  useEffect(() => {
+    if (mode !== "hybrid") return;
+    fetch("/api/ring/devices")
+      .then((r) => r.json())
+      .then((j) => {
+        const names = (j?.devices?.data ?? []).map((d: { attributes?: { name?: string } }) => d.attributes?.name).filter(Boolean) as string[];
+        setRingDevices(names);
+      })
+      .catch(() => setRingDevices([]));
+  }, [mode]);
 
   const reset = useCallback(
     (id: HouseholdId) => {
@@ -182,12 +197,23 @@ export default function NightDoorApp({ mode }: { mode: "simulator" | "live" }) {
           ))}
         </div>
         <div className="topbar-right">
-          {mode === "simulator" ? (
-            <span className="badge badge-sim" title="Events come from the built-in Ring simulator, signed like real Ring webhooks">
+          {/* Hybrid only claims a live device once the Ring API has actually returned one. */}
+          {(mode === "simulator" || (mode === "hybrid" && !ringDevices?.length)) && (
+            <span className="badge badge-sim" data-testid="mode" title="Events come from the built-in Ring simulator, signed like real Ring webhooks">
               <span className="dot" /> Simulated Ring events
             </span>
-          ) : (
-            <span className="badge badge-live">
+          )}
+          {mode === "hybrid" && !!ringDevices?.length && (
+            <span
+              className="badge badge-sim"
+              data-testid="mode"
+              title="Device reads come from the Ring Partner API. Events, snapshots and chime audio are simulated: Ring's Developer Playground serves no recorded footage, has no chime and cannot deliver events to an app."
+            >
+              <span className="dot" /> Live Ring device · {ringDevices[0]} · simulated events
+            </span>
+          )}
+          {mode === "live" && (
+            <span className="badge badge-live" data-testid="mode">
               <span className="dot" /> Live Ring API
             </span>
           )}
@@ -251,8 +277,8 @@ export default function NightDoorApp({ mode }: { mode: "simulator" | "live" }) {
       </main>
 
       <footer className="controls">
-        <span className="controls-label">{mode === "simulator" ? "Simulate" : "Live"}</span>
-        {mode === "simulator" &&
+        <span className="controls-label">{mode === "live" ? "Live" : "Simulate"}</span>
+        {mode !== "live" &&
           steps.map((s, i) => (
             <button
               key={s.id}

@@ -122,9 +122,10 @@ export interface RuleCheck {
 
 export type StreamItem =
   | { t: "webhook"; raw: string; signature: string; verified: boolean; source: "simulator" | "ring" }
+  | { t: "ring_devices"; source: "simulator" | "ring"; names: string[]; note?: string }
   | { t: "assess"; decision: "run" | "suppress" | "ignore"; reason: string; protocol: string[]; rules: RuleCheck[]; at: number; title: string }
   | { t: "tool_call"; id: string; name: string; input: unknown; verdict: "allowed" | "blocked"; rule?: string; reason?: string }
-  | { t: "tool_result"; name: string; summary: string; image?: string }
+  | { t: "tool_result"; name: string; summary: string; image?: string; source?: "simulator" | "ring"; note?: string }
   | { t: "agent_text"; text: string }
   | { t: "state"; state: NightState }
   | { t: "error"; message: string }

@@ -66,7 +66,22 @@ Severity scale: **High** blocks a core feature · **Medium** costs hours or forc
 - **Workaround:** Night Door sends nothing routine. Alerts only fire on a rules-engine decision (one "check" per exit, one "urgent" on the second camera), and quiet events never notify.
 - **Suggestion:** Add a category for safety/urgent alerts with consent and rate-limit expectations.
 
-## 7. Strands TypeScript: cancelling a tool call from a hook
+## 7. What the Developer Playground can actually do (answers our #5, and it is less than expected)
+
+- **Task:** After creating the Ring developer account, move Night Door off its own simulator and onto real Ring infrastructure.
+- **Steps:** Console → Playground → *Generate token* (30 min, scope `ava.v1:read`), then exercised the endpoints Night Door uses (16 Sep 2026).
+- **Expected:** From the Playground's "Simulate live view event" buttons (Package, Vehicle, Motion), we expected simulated events we could receive, plus a snapshot to describe.
+- **Actual:**
+  - Reads work: one device ("Playground Device", Doorbell Pro), plus `capabilities`, `status`, `configurations`, `locations`, `users/me`.
+  - `POST /media/image/download` → **403 `TIME_RANGE_NOT_AUTHORIZED`** for every timestamp we tried; without a timestamp → 403 `REQUEST_FORBIDDEN`.
+  - `POST /media/audio/playback` → 400, and `configurations.audio.customizable_slots` is `null`: there is no chime in the sandbox and the token cannot write anyway.
+  - `GET /v1/history/devices/{id}/events` → `{"data": []}`.
+  - The simulate buttons open a WHEP live-view session in the browser; nothing arrives at a registered webhook URL.
+- **Severity:** High for a caregiving app: the two things Night Door depends on (a snapshot and speaking on a chime) are exactly what the sandbox cannot do.
+- **Workaround:** `RING_MODE=hybrid` — real device/capability/status/history reads, simulated events, demo scenes for snapshots, simulated chime playback, each labeled in the agent feed and the header badge.
+- **Suggestion:** Publish what the Playground supports per endpoint, serve a short canned clip for image download, add a virtual chime with slots, and offer "deliver simulated events to my webhook URL". That single feature would let partners build and test event-driven apps before buying hardware.
+
+## 8. Strands TypeScript: cancelling a tool call from a hook
 
 - **Task:** Enforce the care plan deterministically by blocking a tool call before it runs, and show the reason to the model.
 - **Steps:** Looked for a hook example in the `@strands-agents/sdk` (1.17.0) README; then searched the type definitions.

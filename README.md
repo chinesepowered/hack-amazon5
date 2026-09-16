@@ -2,7 +2,7 @@
 
 **Night Door is a Ring app for families caring for someone with dementia.** When a Ring camera sees a person leave the house in the middle of the night, a Strands agent plays a family member's calm, familiar voice on the Ring Chime, sends the on-duty caregiver the snapshot and exactly what the person is wearing, and, if a second camera sees them moving away, prepares a last-seen card, the call chain and a script for the phone. The family decides what happens next. For parents who live alone, the same care plan runs a gentle **Quiet Morning** check-in.
 
-- **Live demo:** https://night-door.vercel.app (no login; uses clearly labeled simulated Ring events)
+- **Live demo:** https://night-door.vercel.app (no login)
 - **Pitch deck:** https://night-door.vercel.app/slides.html
 - **Video:** coming with the Devpost submission
 
@@ -28,6 +28,27 @@ Night Door turns the Ring devices a family already owns into a care plan:
 
 What people still decide: whether it's a real emergency, who to call, and when it's over.
 
+## What is real Ring, and what is simulated
+
+`RING_MODE` selects one of three modes, and the UI labels each element so nothing over-claims:
+
+| | `simulator` (public demo) | `hybrid` (with a Playground token) | `live` (real account + hardware) |
+| --- | --- | --- | --- |
+| Device list, capabilities, status, event history | simulated | **Ring Partner API** | Ring |
+| Night exit / driveway / doorbell events | simulated, HMAC-signed, same verification path | simulated, HMAC-signed | Ring webhooks |
+| Snapshots | demo scenes | demo scenes (Ring returns 403, below) | Ring image download |
+| Ring Chime voice message | simulated | simulated | Ring audio playback |
+
+We created a Ring developer account and measured the **Developer Playground** on 16 Sep 2026 with a live token (scope `ava.v1:read`):
+
+- One device only: "Playground Device", a Doorbell Pro. `capabilities`, `status`, `configurations`, `locations`, `users/me` all respond.
+- `POST /media/image/download` → **403 `TIME_RANGE_NOT_AUTHORIZED`** for every timestamp tried; no footage is available.
+- `configurations.audio.customizable_slots` is `null` and audio playback returns 400 — no chime in the sandbox, and the token cannot write.
+- `GET /v1/history/devices/{id}/events` is always empty; the Playground's simulate buttons only open a WHEP live-view session in the browser and are not delivered to a partner webhook.
+- There is no second camera, which Night Door's escalation rule needs.
+
+Hybrid mode therefore keeps the device reads real and everything the sandbox cannot do simulated and labeled. See [`FRICTION_LOG.md`](FRICTION_LOG.md) #7 and [`docs/ring-live-checklist.md`](docs/ring-live-checklist.md).
+
 ## How we use Amazon's tech
 
 ### Ring (track technology)
@@ -40,10 +61,8 @@ Night Door is built against the **Ring Partner API** (`https://api.amazonvision.
 | `X-Signature: sha256=` HMAC-SHA256 of the raw body | `lib/ring/signature.ts` | Rejects forged or tampered events (timing-safe compare); duplicate `request_id`s are dropped |
 | `POST /v1/devices/{device_id}/media/image/download` | `lib/ring/client.ts` → `get_snapshot` tool | Snapshot for the family alert and the clothing description |
 | `POST /v1/devices/{device_id}/media/audio/playback` (Ring Chime) | `lib/ring/client.ts` → `play_chime_message` tool | The familiar recorded voice. It is the only write action Ring exposes, and it's the heart of the product |
-| `GET /v1/devices?include=status,capabilities`, `GET /v1/history/devices/{id}/events` | `lib/ring/client.ts`, `app/api/ring/devices/route.ts` | Live-mode device mapping and inspection |
+| `GET /v1/devices?include=status,capabilities`, `GET /v1/history/devices/{id}/events` | `lib/ring/client.ts`, `app/api/ring/devices/route.ts` | Live device reads (real in hybrid mode, shown in the header badge) |
 | OAuth refresh (`oauth.ring.com/oauth/token`) or Developer Playground token, 429 `Retry-After` handling | `lib/ring/client.ts` | Auth and rate limits |
-
-**Simulator mode (what the demo runs today).** We don't own Ring hardware and built this before creating a Ring developer account, so `RING_MODE=simulator` (the default) uses a built-in simulator: `app/api/sim/emit/route.ts` builds webhook bodies with exactly the documented field names and signs them with the same HMAC key, and they go through the **same** verification and parsing code as real webhooks. Snapshots are original illustrations (`scenes/`). The UI shows a **"Simulated Ring events"** badge the whole time. Setting `RING_MODE=live` switches the same app to the real API; the steps to re-record against Ring's Developer Playground are in [`docs/ring-live-checklist.md`](docs/ring-live-checklist.md). Everything we tripped over is in [`FRICTION_LOG.md`](FRICTION_LOG.md).
 
 The app follows the Ring Appstore UX guide: a web experience, WCAG 2.2 AA-minded (keyboard focus, labels, text next to every color, reduced-motion support), no routine notifications, no Ring branding.
 
@@ -84,14 +103,14 @@ cp .env.example .env.local   # set OPENAI_BASE_URL / OPENAI_API_KEY / OPENAI_MOD
 pnpm build && pnpm start     # http://localhost:3000
 ```
 
-- `RING_MODE=simulator` (default) needs nothing else. For live Ring, follow [`docs/ring-live-checklist.md`](docs/ring-live-checklist.md).
+- `RING_MODE=simulator` (default) needs nothing else. `RING_MODE=hybrid` plus a Developer Playground token in `RING_ACCESS_TOKEN` makes the device reads real; see [`docs/ring-live-checklist.md`](docs/ring-live-checklist.md).
 - `node scripts/render-assets.mjs` re-renders the simulator images and the architecture diagram (uses Playwright with local Chrome).
 - Demo state lives in the browser and is sent with each request; there is no database. The agent route has a per-IP rate limit (in-memory, per server instance) and a step cap.
 
 ## Honest notes
 
 - New work, built during the hackathon window (which started Aug 31, 2026).
-- All households, names, phone numbers (555-01xx) and camera images are **fictional**. Ring events in the demo are **simulated** (see above).
+- All households, names, phone numbers (555-01xx) and camera images are **fictional**. Ring events in the demo are **simulated** (see the table above).
 - The chime messages are represented as text; a real deployment needs the family's recorded audio in a Chime audio slot (see FRICTION_LOG #1).
 - Claude Code was used as a coding assistant. Demo video narration is synthetic (ElevenLabs).
 

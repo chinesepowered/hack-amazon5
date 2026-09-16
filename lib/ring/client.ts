@@ -2,17 +2,41 @@ import { simSnapshotPath } from "./sim";
 
 export const RING_API_BASE = "https://api.amazonvision.com";
 
-export type RingMode = "simulator" | "live";
+// Three modes:
+//   live      everything goes to the Ring Partner API
+//   hybrid    the reads the Ring Developer Playground actually serves are real (devices,
+//             capabilities, status, event history); snapshots, chime audio and the events
+//             themselves are simulated and labeled per element in the UI
+//   simulator no network; the documented shapes are produced locally
+//
+// Measured against the Playground (token scope `ava.v1:read`): the sandbox account has one
+// Doorbell Pro, image download answers 403 TIME_RANGE_NOT_AUTHORIZED for every timestamp we tried,
+// there is no chime, and audio playback is rejected. Hence hybrid. See docs/ring-live-checklist.md.
+
+export type RingMode = "simulator" | "hybrid" | "live";
+export type Source = "ring" | "simulated";
 
 export function ringMode(): RingMode {
-  return process.env.RING_MODE === "live" ? "live" : "simulator";
+  const m = process.env.RING_MODE;
+  return m === "live" || m === "hybrid" ? m : "simulator";
 }
+
+export const hasRingToken = () => !!(process.env.RING_ACCESS_TOKEN || process.env.RING_REFRESH_TOKEN);
 
 export interface SnapshotImage {
   src: string;
   dataUri: string;
   mime: string;
   bytes: number;
+  source: Source;
+  /** Why it is simulated, when it is. Surfaced in the agent feed. */
+  note?: string;
+}
+
+export interface ChimeResult {
+  status: number;
+  source: Source;
+  note?: string;
 }
 
 export interface RingClient {
@@ -20,7 +44,7 @@ export interface RingClient {
   listDevices(): Promise<unknown>;
   eventHistory(deviceId: string): Promise<unknown>;
   downloadSnapshot(deviceId: string, componentId?: number): Promise<SnapshotImage>;
-  playChimeAudio(deviceId: string, audioRef: string, components?: number[]): Promise<{ status: number }>;
+  playChimeAudio(deviceId: string, audioRef: string, components?: number[]): Promise<ChimeResult>;
 }
 
 // Household device ids are demo ids; live mode maps them to the account's real Ring devices.
@@ -40,6 +64,9 @@ export function demoDeviceId(liveId: string): string {
   const hit = Object.entries(LIVE_DEVICE_MAP).find(([, v]) => v && v === liveId);
   return hit ? hit[0] : liveId;
 }
+
+const SANDBOX_SNAPSHOT_NOTE = "Playground has no recorded footage (403 TIME_RANGE_NOT_AUTHORIZED); demo scene";
+const SANDBOX_CHIME_NOTE = "Playground account has no chime; playback simulated";
 
 let cachedToken: { value: string; expires: number } | null = null;
 
@@ -67,6 +94,12 @@ async function accessToken(): Promise<string> {
   return json.access_token;
 }
 
+async function ringErrorMessage(res: Response, what: string) {
+  const body = (await res.json().catch(() => null)) as { errors?: { code?: string; detail?: string }[] } | null;
+  const first = body?.errors?.[0];
+  return `${what} ${res.status}${first?.code ? ` ${first.code}` : ""}${first?.detail ? `: ${first.detail}` : ""}`;
+}
+
 class LiveRingClient implements RingClient {
   mode: RingMode = "live";
 
@@ -81,7 +114,7 @@ class LiveRingClient implements RingClient {
       await new Promise((r) => setTimeout(r, Math.min(wait, 5) * 1000));
       return this.request(path, init, true);
     }
-    if (!res.ok) throw new Error(`Ring API ${res.status} on ${init.method ?? "GET"} ${path}`);
+    if (!res.ok) throw new Error(await ringErrorMessage(res, `${init.method ?? "GET"} ${path}`));
     return res;
   }
 
@@ -97,12 +130,12 @@ class LiveRingClient implements RingClient {
     const res = await this.request(`/v1/devices/${encodeURIComponent(liveDeviceId(deviceId))}/media/image/download`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ components: [{ component_id: String(componentId) }] }),
+      body: JSON.stringify({ type: "at_timestamp", timestamp: Math.floor(Date.now() / 1000), components: [{ component_id: String(componentId) }] }),
     });
     const mime = res.headers.get("Content-Type")?.split(";")[0] || "image/jpeg";
     const buf = Buffer.from(await res.arrayBuffer());
     const dataUri = `data:${mime};base64,${buf.toString("base64")}`;
-    return { src: dataUri, dataUri, mime, bytes: buf.length };
+    return { src: dataUri, dataUri, mime, bytes: buf.length, source: "ring" };
   }
 
   async playChimeAudio(deviceId: string, audioRef: string, components: number[] = [0]) {
@@ -110,15 +143,18 @@ class LiveRingClient implements RingClient {
     const res = await this.request(`/v1/devices/${encodeURIComponent(liveDeviceId(deviceId))}/media/audio/playback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ audio_ref: ref, components }),
+      body: JSON.stringify({ data: { type: "audio", attributes: { audio_ref: ref } }, components }),
     });
-    return { status: res.status };
+    return { status: res.status, source: "ring" as const };
   }
 }
 
 class SimulatorRingClient implements RingClient {
   mode: RingMode = "simulator";
-  constructor(private origin: string) {}
+  constructor(
+    private origin: string,
+    private note?: string,
+  ) {}
 
   async listDevices() {
     return { data: [], meta: { simulated: true } };
@@ -135,14 +171,63 @@ class SimulatorRingClient implements RingClient {
     if (!res.ok) throw new Error(`Simulator snapshot ${res.status}`);
     const mime = res.headers.get("Content-Type")?.split(";")[0] || "image/jpeg";
     const buf = Buffer.from(await res.arrayBuffer());
-    return { src: path, dataUri: `data:${mime};base64,${buf.toString("base64")}`, mime, bytes: buf.length };
+    return { src: path, dataUri: `data:${mime};base64,${buf.toString("base64")}`, mime, bytes: buf.length, source: "simulated", note: this.note };
   }
 
   async playChimeAudio() {
-    return { status: 202 };
+    return { status: 202, source: "simulated" as const, note: this.note };
+  }
+}
+
+/**
+ * Hybrid: real device reads, simulated media. Every live call degrades to the simulator with a
+ * note rather than failing, so a stale 30-minute Playground token never breaks the demo.
+ */
+class HybridRingClient implements RingClient {
+  mode: RingMode = "hybrid";
+  private live = new LiveRingClient();
+  private sim: SimulatorRingClient;
+  constructor(origin: string) {
+    this.sim = new SimulatorRingClient(origin, SANDBOX_SNAPSHOT_NOTE);
+  }
+
+  async listDevices() {
+    if (!hasRingToken()) return { data: [], meta: { simulated: true, reason: "no RING_ACCESS_TOKEN" } };
+    try {
+      return await this.live.listDevices();
+    } catch (err) {
+      return { data: [], meta: { simulated: true, reason: err instanceof Error ? err.message : String(err) } };
+    }
+  }
+
+  async eventHistory(deviceId: string) {
+    if (!hasRingToken()) return { data: [], meta: { simulated: true } };
+    try {
+      return await this.live.eventHistory(deviceId);
+    } catch (err) {
+      return { data: [], meta: { simulated: true, reason: err instanceof Error ? err.message : String(err) } };
+    }
+  }
+
+  async downloadSnapshot(deviceId: string, componentId = 0): Promise<SnapshotImage> {
+    if (hasRingToken()) {
+      try {
+        return await this.live.downloadSnapshot(deviceId, componentId);
+      } catch {
+        // fall through to the demo scene, noted below
+      }
+    }
+    return this.sim.downloadSnapshot(deviceId);
+  }
+
+  async playChimeAudio(): Promise<ChimeResult> {
+    return { status: 202, source: "simulated", note: SANDBOX_CHIME_NOTE };
   }
 }
 
 export function getRingClient(origin: string): RingClient {
-  return ringMode() === "live" ? new LiveRingClient() : new SimulatorRingClient(origin);
+  const mode = ringMode();
+  if (mode === "live") return new LiveRingClient();
+  if (mode === "hybrid") return new HybridRingClient(origin);
+  return new SimulatorRingClient(origin);
 }
