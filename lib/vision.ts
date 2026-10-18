@@ -15,7 +15,7 @@ export async function describeClothing(dataUri: string): Promise<{ clothing: Clo
     baseURL: process.env.OPENAI_BASE_URL,
     apiKey: process.env.OPENAI_API_KEY,
     timeout: 40_000,
-    maxRetries: 1,
+    maxRetries: 4,
   });
   const started = Date.now();
   const request = {

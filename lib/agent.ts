@@ -16,7 +16,7 @@ function model() {
     apiKey: process.env.OPENAI_API_KEY,
     modelId: process.env.OPENAI_MODEL,
     maxTokens: 700,
-    clientConfig: { baseURL: process.env.OPENAI_BASE_URL, timeout: 45_000, maxRetries: 1 },
+    clientConfig: { baseURL: process.env.OPENAI_BASE_URL, timeout: 45_000, maxRetries: 4 },
     params: { temperature: 0, chat_template_kwargs: { enable_thinking: false } },
   });
 }
